@@ -23,6 +23,10 @@ public class Player : MonoBehaviour
     public float groundCheckDistance;
     private bool isGrounded;
 
+    
+    private bool facingRight = true;
+    private int facingDirection = 1;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -33,11 +37,11 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        bool isMoving = rb.velocity.x != 0;
-
-        anim.SetBool("isMoving", isMoving);
+        AnimationControllers();
 
         CollisionChecks();
+
+        FlipController();
 
         InputChecks();
 
@@ -47,6 +51,15 @@ public class Player : MonoBehaviour
         }
 
         Move();
+    }
+
+    private void AnimationControllers()
+    {
+        bool isMoving = rb.velocity.x != 0;
+
+        anim.SetBool("isMoving", isMoving);
+        anim.SetBool("isGrounded", isGrounded);
+        anim.SetFloat("yVelocity", rb.velocity.y);
     }
 
     private void InputChecks()
@@ -81,6 +94,25 @@ public class Player : MonoBehaviour
     private void CollisionChecks()
     {
         isGrounded = Physics2D.Raycast(transform.position, Vector2.down, groundCheckDistance, whatIsGround);
+    }
+
+    private void FlipController()
+    {
+        if (facingRight && movingInput < 0)
+        {
+            Flip();
+        }
+        else if (!facingRight && movingInput > 0)
+        {
+            Flip();
+        }
+    }
+
+    private void Flip()
+    {   
+        facingDirection = facingDirection * -1;
+        facingRight =!facingRight;
+        transform.Rotate(0, 180, 0);
     }
 
     private void Jump()
