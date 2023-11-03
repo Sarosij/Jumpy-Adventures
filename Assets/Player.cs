@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting.Antlr3.Runtime.Tree;
 using UnityEngine;
 
 public class Player : MonoBehaviour
@@ -11,9 +12,11 @@ public class Player : MonoBehaviour
     [Header("Move info")]
     public float moveSpeed;
     public float jumpForce;
+    public Vector2 wallJumpDirection;
     
 
-    private bool canDoubleJump;
+    private bool canDoubleJump = true;
+    private bool canMove;
 
 
     private float movingInput;
@@ -21,7 +24,11 @@ public class Player : MonoBehaviour
     [Header("Collision info")]
     public LayerMask whatIsGround;
     public float groundCheckDistance;
+    public float wallCheckDistance;
     private bool isGrounded;
+    private bool isWallDetected;
+    private bool canWallSlide;
+    private bool isWallSliding;
 
     
     private bool facingRight = true;
@@ -48,9 +55,18 @@ public class Player : MonoBehaviour
         if (isGrounded)
         {
             canDoubleJump = true;
+            canMove = true;
         }
 
+        if(canWallSlide){
+            isWallSliding = true;
+            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.1f);
+        }
+
+        
         Move();
+
+        
     }
 
     private void AnimationControllers()
@@ -59,6 +75,8 @@ public class Player : MonoBehaviour
 
         anim.SetBool("isMoving", isMoving);
         anim.SetBool("isGrounded", isGrounded);
+        anim.SetBool("isWallSliding", isWallSliding);
+        anim.SetBool("isWallDetected", isWallDetected);
         anim.SetFloat("yVelocity", rb.velocity.y);
     }
 
@@ -66,16 +84,21 @@ public class Player : MonoBehaviour
     {
         movingInput = Input.GetAxisRaw("Horizontal");
 
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            JumpButton();
+        if (Input.GetAxis("Vertical") < 0)
+            canWallSlide = false;
 
-        }
+        if (Input.GetKeyDown(KeyCode.Space))
+            JumpButton();
+        
     }
 
     private void JumpButton()
     {
-        if (isGrounded)
+        if (isWallSliding)
+        {
+            WallJump();
+        }
+        else if (isGrounded)
         {
             Jump();
         }
@@ -84,25 +107,44 @@ public class Player : MonoBehaviour
             canDoubleJump = false;
             Jump();
         }
+
+        canWallSlide = false;
     }
 
     private void Move()
     {
-        rb.velocity = new Vector2(moveSpeed * movingInput, rb.velocity.y);
+        if (canMove)
+            rb.velocity = new Vector2(moveSpeed * movingInput, rb.velocity.y);
+    }
+
+    private void WallJump()
+    {
+        canMove = false;
+        rb.velocity = new Vector2(wallJumpDirection.x * -facingDirection, wallJumpDirection.y);
     }
 
     private void CollisionChecks()
     {
         isGrounded = Physics2D.Raycast(transform.position, Vector2.down, groundCheckDistance, whatIsGround);
+        isWallDetected = Physics2D.Raycast(transform.position, Vector2.right * facingDirection, wallCheckDistance, whatIsGround);
+
+        if (isWallDetected && rb.velocity.y<0)
+            canWallSlide = true;
+
+        if (!isWallDetected)
+        {
+            isWallSliding = false;
+            canWallSlide = false;
+        }
     }
 
     private void FlipController()
     {
-        if (facingRight && movingInput < 0)
+        if (facingRight && rb.velocity.x < -0.1f)
         {
             Flip();
         }
-        else if (!facingRight && movingInput > 0)
+        else if (!facingRight && rb.velocity.x > 0.1f)
         {
             Flip();
         }
@@ -121,6 +163,7 @@ public class Player : MonoBehaviour
     }
 
     private void OnDrawGizmos() {
-        Gizmos.DrawLine (transform.position, new Vector3(transform.position.x, transform.position.y - groundCheckDistance));    
+        Gizmos.DrawLine (transform.position, new Vector3(transform.position.x, transform.position.y - groundCheckDistance));
+        Gizmos.DrawLine (transform.position, new Vector3(transform.position.x + wallCheckDistance * facingDirection, transform.position.y));
     }
 }
