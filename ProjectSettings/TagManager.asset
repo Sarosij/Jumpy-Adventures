@@ -41,6 +41,9 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Background
+    uniqueID: 899361551
+    locked: 0
   - name: Saw
     uniqueID: 1339762601
     locked: 0
