@@ -7,12 +7,12 @@ public class Trap_Fire : Trap
     public bool isWorking;
     private Animator anim;
     public float repeatRate;
-    public bool hasSwitcher;
+   
 
     private void Start() {
         anim = GetComponent<Animator>();
 
-        if (!hasSwitcher)
+        if (transform.parent == null)
             InvokeRepeating ("FireSwitch", 0, repeatRate);
     }
 
@@ -28,7 +28,8 @@ public class Trap_Fire : Trap
 
     public void FireSwitchAfter(float seconds)
     {
-        FireSwitch();
+        CancelInvoke(); 
+        isWorking = false;
         Invoke ("FireSwitch",seconds);
     }
          
