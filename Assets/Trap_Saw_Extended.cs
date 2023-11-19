@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Trap_Saw : Trap
+public class Trap_Saw_Extended : Trap
 {
     private Animator anim;
     [SerializeField] private bool isWorking;
@@ -11,26 +11,36 @@ public class Trap_Saw : Trap
     [SerializeField] private float speed;
 
     private int movePointIndex;
+    private bool goingForward = true;
 
     void Start()
     {
         anim = GetComponent<Animator>();
+        anim.SetBool("isWorking", true);
         transform.position = movePoint[0].position;
     }
 
     // Update is called once per frame
     void Update()
     {
-        anim.SetBool("isWorking", isWorking);
-
         transform.position = Vector3.MoveTowards(transform.position, movePoint[movePointIndex].position, speed * Time.deltaTime);
 
         if (Vector2.Distance(transform.position, movePoint[movePointIndex].position) < 0.15f)
         {
-            movePointIndex++;
+            if (movePointIndex==0)
+                goingForward = true;
+            
+            if (goingForward)
+                movePointIndex++;
+
+            else
+                movePointIndex--;
 
             if (movePointIndex >= movePoint.Length)
-                movePointIndex = 0;
+            {
+                movePointIndex = movePoint.Length - 1;
+                goingForward = false;
+            }
         }
 
 
